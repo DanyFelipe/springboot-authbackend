@@ -1,28 +1,58 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: authbackend-pg-container
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: authbackend-db
-      POSTGRES_USER: danyfelipe
-      POSTGRES_PASSWORD: hackerman
+      POSTGRES_DB: ${POSTGRES_DB:-authbackend-db}
+      POSTGRES_USER: ${POSTGRES_USER:-danyfelipe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hackerman}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - authbackend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-danyfelipe} -d ${POSTGRES_DB:-authbackend-db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   backend:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: authbackend-spring-container
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/authbackend-db
-      SPRING_DATASOURCE_USERNAME: danyfelipe
-      SPRING_DATASOURCE_PASSWORD: hackerman
+      # Spring Configuration
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-authbackend-db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-danyfelipe}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-hackerman}
+      
+      # Ultra-Secure JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-Df2025_Aug10_UltraSecretKey_SpringAuth_Backend_JWT_DanyFelipe_ProduccionSegura_!@#$%^&*()_+}
+      JWT_ACCESS_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION_MS:-900000}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-86400000}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - authbackend-network
+    volumes:
+      - app-logs:/app/logs
 
 volumes:
   pgdata:
+    driver: local
+  app-logs:
+    driver: local
+
+networks:
+  authbackend-network:
+    driver: bridge
