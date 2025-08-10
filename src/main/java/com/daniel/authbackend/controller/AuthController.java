@@ -1,64 +1,43 @@
 package com.daniel.authbackend.controller;
 
-import com.daniel.authbackend.dto.RegisterRequest;
-import com.daniel.authbackend.entity.Role;
-import com.daniel.authbackend.entity.User;
-import com.daniel.authbackend.repository.RoleRepository;
-import com.daniel.authbackend.repository.UserRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.daniel.authbackend.dto.*;
+import com.daniel.authbackend.service.IUserService;
+import com.daniel.authbackend.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collections;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final IUserService userService;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserRepository userRepository,
-                          RoleRepository roleRepository,
-                          PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 
-    // Endpoint para registro de usuario
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody RegisterRequest request) {
-        if(userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: El nombre de usuario ya existe");
+    public RegisterResponse register(@RequestBody RegisterRequest request) {
+        return userService.register(request);
+    }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            jwtUtil.invalidateToken(token);
+            return "Sesión cerrada correctamente";
         }
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-        Role userRole = roleRepository.findByUsername("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("Error: Rol no encontrado"));
-
-        user.setRoles(Collections.singleton(userRole));
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Usuario registrado exitosamente");
+        return "No autenticado";
     }
 
-    // Endpoint para obtener info del usuario autenticado
-    @GetMapping("/user/info")
-    public String userInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        return "Usuario autenticado: " + userDetails.getUsername();
-    }
-
-    // Endpoint exclusivo para admins
-    @GetMapping("/admin/dashboard")
-    public String adminDashboard() {
-        return "Panel de administrador";
+    @PostMapping("/refresh")
+    public LoginResponse refreshToken(@RequestBody RefreshRequest request) {
+        return userService.refreshToken(request);
     }
 }
