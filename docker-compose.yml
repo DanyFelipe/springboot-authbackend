@@ -1,28 +1,23 @@
 version: '3.8'
-
 services:
-  db:
+  postgres:
     image: postgres:15
-    container_name: authbackend-pg-container
+    container_name: authbackend-postgres
     environment:
-      POSTGRES_DB: authbackend-db
-      POSTGRES_USER: danyfelipe
-      POSTGRES_PASSWORD: hackerman
+      POSTGRES_DB: authbackend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  backend:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/authbackend-db
-      SPRING_DATASOURCE_USERNAME: danyfelipe
-      SPRING_DATASOURCE_PASSWORD: hackerman
-    depends_on:
-      - db
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - authbackend-network
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  postgres_data:
+
+networks:
+  authbackend-network:
+    driver: bridge

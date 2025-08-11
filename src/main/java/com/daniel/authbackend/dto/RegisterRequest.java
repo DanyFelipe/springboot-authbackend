@@ -1,14 +1,10 @@
 package com.daniel.authbackend.dto;
 
 import lombok.Data;
-import jakarta.validation.constraints.NotBlank;
 
 @Data
 public class RegisterRequest {
-    @NotBlank
     private String username;
-    @NotBlank
+    private String email;
     private String password;
-    @NotBlank
-    private String role; // "USER" o "ADMIN"
 }

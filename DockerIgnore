@@ -1,0 +1,51 @@
+# Build directories
+target/
+!target/*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+logs/
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Docker files (except Dockerfile)
+docker-compose.override.yml
+.dockerignore
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Application specific
+application-local.properties
+application-dev.properties

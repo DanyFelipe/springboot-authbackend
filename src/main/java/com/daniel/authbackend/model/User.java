@@ -1,14 +1,14 @@
 package com.daniel.authbackend.model;
 
-import lombok.*;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name = "users")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,13 +17,15 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(unique = true, nullable = false)
+    private String email;
+
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
-    private String role; // "USER" o "ADMIN"
+    private String role; // Siempre será USER por defecto
 
-    private Long lastActivity; // timestamp de la última actividad
-
-    private Long sessionTimeout; // tiempo de inactividad permitido en ms
+    private Long lastActivity;
+    private Long sessionTimeout;
 }
